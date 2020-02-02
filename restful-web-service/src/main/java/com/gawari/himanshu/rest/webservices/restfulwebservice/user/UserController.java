@@ -6,8 +6,8 @@ import java.util.List;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,27 +27,40 @@ public class UserController {
 		return userDaoService.findAll();
 	}
 
-	//Simple Get User
+	// Simple Get User
 	/*
 	 * @GetMapping(path = "/users/{id}") public User retrieveUser(@PathVariable int
 	 * id) { User user = userDaoService.findOne(id); if (user == null) throw new
 	 * UserNotFoundException("id - " + id); return user; }
 	 */
-	
-	//Get User with HATEOAS
+
+	// Get User with HATEOAS having
+	// some compatibility issues with
+	// latest spring 2.2.4
+	/*
+	 * @GetMapping(path = "/users/{id}") public EntityModel<User>
+	 * retrieveUser(@PathVariable int id) { User user = userDaoService.findOne(id);
+	 * if (user == null) throw new UserNotFoundException("id - " + id);
+	 * EntityModel<User> model = new EntityModel<>(user); WebMvcLinkBuilder linkTo =
+	 * WebMvcLinkBuilder
+	 * .linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).retrieveAllUsers());
+	 * model.add(linkTo.withRel("all-users")); return model; }
+	 */
+
+	// Get User with HATEOAS
+	// with old spring 2.1.3
 	@GetMapping(path = "/users/{id}")
-	public EntityModel<User> retrieveUser(@PathVariable int id) {
+	public Resource<User> retrieveUser(@PathVariable int id) {
 		User user = userDaoService.findOne(id);
 		if (user == null)
 			throw new UserNotFoundException("id - " + id);
 
 		// HATEOAS
-		EntityModel<User> model = new EntityModel<>(user);
-		WebMvcLinkBuilder linkTo = WebMvcLinkBuilder
-				.linkTo(WebMvcLinkBuilder.methodOn(this.getClass()).retrieveAllUsers());
-		model.add(linkTo.withRel("all-users"));
-
-		return model;
+		Resource<User> resource = new Resource<User>(user);
+		ControllerLinkBuilder linkTo = ControllerLinkBuilder
+				.linkTo(ControllerLinkBuilder.methodOn(this.getClass()).retrieveAllUsers());
+		resource.add(linkTo.withRel("all-users"));
+		return resource;
 	}
 
 	@PostMapping(path = "/users")
